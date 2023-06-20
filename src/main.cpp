@@ -15,6 +15,7 @@ int16_t len_button = sizeof(buttons)/sizeof(int16_t);
 int16_t sem[] ={LED_GREEN, LED_YELLOW, LED_RED};
 int16_t len_sem = sizeof(sem)/sizeof(int16_t);
 int16_t tim[] ={1000, 500, 200};
+float f_time = 1;                                    // factor de tiempo
 typedef enum{
   BUTTON_UP,
   BUTTON_DOWN,
@@ -25,14 +26,14 @@ typedef enum{
   BUTTON_FALLING_2,
   BUTTON_RISING_2
 } fsmButtonState_t;
-fsmButtonState_t fsmButtonState;                    // States of the FSM
-fsmButtonState_t fsmButtonState2;                    // States of the FSM
+fsmButtonState_t fsmButtonState;                    // States of the FSM SW1
+fsmButtonState_t fsmButtonState2;                   // States of the FSM SW2
 enum sem{NORMAL, DISCONECTED, ALARM};
 typedef struct{
-  const int16_t* sem_light;                    // puntero
-  const int16_t* sem_time;                    // puntero
-  const int16_t  length;
-  enum sem       modes;
+  const int16_t* sem_light;                         // puntero
+  const int16_t* sem_time;                          // puntero
+  const int16_t  length;                            // longitud del semáforo (3)
+  enum sem       modes;                             // variable enumerada de modos
 } sequenceControl;
 /************************************************************************/
 int16_t NonBlockingDelay(int16_t t_delay);
@@ -47,6 +48,7 @@ void ButtonPressed_2 (void);
 void ButtonReleased_2 (void);
 void TurnOffLeds(sequenceControl controler);
 void Sequence(sequenceControl controler);
+void FTime(void);
 void setup() {
   for (int16_t i=0; i<len_leds;i++) pinMode(leds[i],OUTPUT);
   for (int16_t i=0; i<len_button;i++) pinMode(buttons[i],INPUT);
@@ -54,9 +56,8 @@ void setup() {
 }
 /**************************** + Main loop + *****************************/
 void loop() {
-  // enum sem modes = NORMAL;
-  enum sem modes = ALARM;
-  sequenceControl controlModes ={sem, tim, len_sem, modes};                // objeto (con estructura)
+  enum sem modes = NORMAL;
+  sequenceControl controlModes ={sem, tim, len_sem, modes};             // objeto (con estructura)
   FsmButtonInit();
   while(1){
     FsmButtonUpdate(buttons);
@@ -157,6 +158,7 @@ void ButtonPressed_2 (void){
 }
 void ButtonReleased_2 (void){
   digitalWrite(LED_BLUE, LOW);
+  FTime();
 }
 void FsmButtonError2 (void){
   fsmButtonState2 = BUTTON_UP_2;
@@ -206,7 +208,7 @@ void Sequence(sequenceControl controler) {
   {
     case NORMAL:
       flag =1;
-      if (NonBlockingDelay2(controler.sem_time[pos])){
+      if (NonBlockingDelay2(controler.sem_time[pos] * f_time)){
         if (pos < controler.length - 1) {
           ++pos;
         } else {
@@ -226,5 +228,19 @@ void Sequence(sequenceControl controler) {
         flag = !flag;
       }
       break;
+  }
+}
+void FTime(void){
+  if (f_time == 1){
+    f_time = 2;
+  }
+  else if (f_time == 2){
+    f_time = 0.5;
+  }
+  else if (f_time == 0.5){
+    f_time = 1;
+  }
+  else {
+    f_time = 1;
   }
 }
