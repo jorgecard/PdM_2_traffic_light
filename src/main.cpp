@@ -27,7 +27,7 @@ typedef enum{
 } fsmButtonState_t;
 fsmButtonState_t fsmButtonState;                    // States of the FSM
 fsmButtonState_t fsmButtonState2;                    // States of the FSM
-enum sem{NORMAL, DISCONECTED, ALARM, X};
+enum sem{NORMAL, DISCONECTED, ALARM};
 typedef struct{
   const int16_t* sem_light;                    // puntero
   const int16_t* sem_time;                    // puntero
@@ -54,7 +54,8 @@ void setup() {
 }
 /**************************** + Main loop + *****************************/
 void loop() {
-  enum sem modes = NORMAL;
+  // enum sem modes = NORMAL;
+  enum sem modes = ALARM;
   sequenceControl controlModes ={sem, tim, len_sem, modes};                // objeto (con estructura)
   FsmButtonInit();
   while(1){
@@ -195,13 +196,16 @@ void TurnOffLeds(sequenceControl controler){
 }
 void Sequence(sequenceControl controler) {
   static int16_t pos = 0;                   // static: Entre llamadas a la función conserva su valor
-  static int16_t time = 1000;
-  int16_t auxiliari;
+  static boolean flag = true;
   TurnOffLeds(controler);
-  digitalWrite(controler.sem_light[pos], HIGH);
+  if (flag){
+    digitalWrite(controler.sem_light[pos], HIGH);
+  }
+  
   switch (controler.modes)
   {
     case NORMAL:
+      flag =1;
       if (NonBlockingDelay2(controler.sem_time[pos])){
         if (pos < controler.length - 1) {
           ++pos;
@@ -210,8 +214,17 @@ void Sequence(sequenceControl controler) {
         }
       }
       break;
-    // default:
-    //   FsmButtonError2();
-    //   break;
+    case DISCONECTED:
+      if (NonBlockingDelay2(controler.sem_time[pos])){
+        pos = 1;
+        flag = !flag;
+      }
+      break;
+    case ALARM:
+      if (NonBlockingDelay2(controler.sem_time[pos]/2)){
+        pos = 2;
+        flag = !flag;
+      }
+      break;
   }
 }
