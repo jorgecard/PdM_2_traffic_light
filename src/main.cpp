@@ -14,7 +14,7 @@ int16_t buttons[] = {SW1, SW2, SW3, SW4};
 int16_t len_button = sizeof(buttons)/sizeof(int16_t);
 int16_t sem[] ={LED_GREEN, LED_YELLOW, LED_RED};
 int16_t len_sem = sizeof(sem)/sizeof(int16_t);
-int16_t times[] ={3000, 500, 2000};
+int16_t tim[] ={1000, 500, 200};
 typedef enum{
   BUTTON_UP,
   BUTTON_DOWN,
@@ -27,9 +27,10 @@ typedef enum{
 } fsmButtonState_t;
 fsmButtonState_t fsmButtonState;                    // States of the FSM
 fsmButtonState_t fsmButtonState2;                    // States of the FSM
-enum sem{NORMAL, DISCONECTED, ALARM};
+enum sem{NORMAL, DISCONECTED, ALARM, X};
 typedef struct{
-  const int16_t* sem;                    // puntero
+  const int16_t* sem_light;                    // puntero
+  const int16_t* sem_time;                    // puntero
   const int16_t  length;
   enum sem       modes;
 } sequenceControl;
@@ -54,7 +55,7 @@ void setup() {
 /**************************** + Main loop + *****************************/
 void loop() {
   enum sem modes = NORMAL;
-  sequenceControl controlModes ={sem, len_sem, modes};                // objeto (con estructura)
+  sequenceControl controlModes ={sem, tim, len_sem, modes};                // objeto (con estructura)
   FsmButtonInit();
   while(1){
     FsmButtonUpdate(buttons);
@@ -189,17 +190,19 @@ int16_t NonBlockingDelay2(int16_t t_delay){
 }
 void TurnOffLeds(sequenceControl controler){
   for (int16_t i = 0; i < controler.length; i++){
-    digitalWrite(controler.sem[i], LOW);
+    digitalWrite(controler.sem_light[i], LOW);
   }
 }
 void Sequence(sequenceControl controler) {
   static int16_t pos = 0;                   // static: Entre llamadas a la función conserva su valor
+  static int16_t time = 1000;
+  int16_t auxiliari;
   TurnOffLeds(controler);
-  digitalWrite(controler.sem[pos], HIGH);
+  digitalWrite(controler.sem_light[pos], HIGH);
   switch (controler.modes)
   {
     case NORMAL:
-      if (NonBlockingDelay2(1000)){
+      if (NonBlockingDelay2(controler.sem_time[pos])){
         if (pos < controler.length - 1) {
           ++pos;
         } else {
