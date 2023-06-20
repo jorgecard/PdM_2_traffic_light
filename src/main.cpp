@@ -142,22 +142,18 @@ void FsmButtonUpdate(int16_t buttons[]){
   }
 }
 void ButtonPressed (void){
-  digitalWrite(LED_GREEN, HIGH);
-  digitalWrite(LED_RED, HIGH);
+  digitalWrite(LED_BLUE, HIGH);
 }
 void ButtonReleased (void){
-  digitalWrite(LED_GREEN, LOW);
-  digitalWrite(LED_RED, LOW);
+  digitalWrite(LED_BLUE, LOW);
 }
 void FsmButtonError (void){
   fsmButtonState = BUTTON_UP;
 }
 void ButtonPressed_2 (void){
-  digitalWrite(LED_YELLOW, HIGH);
   digitalWrite(LED_BLUE, HIGH);
 }
 void ButtonReleased_2 (void){
-  digitalWrite(LED_YELLOW, LOW);
   digitalWrite(LED_BLUE, LOW);
 }
 void FsmButtonError2 (void){
@@ -203,7 +199,7 @@ void Sequence(sequenceControl controler) {
   switch (controler.modes)
   {
     case NORMAL:
-      if (NonBlockingDelay(1000)){
+      if (NonBlockingDelay2(1000)){
         if (pos < controler.length - 1) {
           ++pos;
         } else {
