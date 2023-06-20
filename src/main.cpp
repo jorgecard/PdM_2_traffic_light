@@ -58,6 +58,7 @@ void loop() {
   FsmButtonInit();
   while(1){
     FsmButtonUpdate(buttons);
+    Sequence(controlModes);
   }
 }
 /************************* + End Main loop + **************************/
@@ -192,26 +193,26 @@ int16_t NonBlockingDelay2(int16_t t_delay){
 }
 void TurnOffLeds(sequenceControl controler){
   for (int16_t i = 0; i < controler.length; i++){
-    digitalWrite(controler.leds[i], LOW);
+    digitalWrite(controler.sem[i], LOW);
   }
 }
 void Sequence(sequenceControl controler) {
   static int16_t pos = 0;                   // static: Entre llamadas a la función conserva su valor
   TurnOffLeds(controler);
-  digitalWrite(controler.leds[pos], HIGH);
-  if (controler.orientation == ascending) {
-    // si es menor que len: aumentamos pos
-    if (pos < controler.length - 1) {
-      ++pos;
-    } else {
-      pos = 0;
-    }
-  } else {
-    // si es mayor que cero vamos descendiendo
-    if (pos > 0) {
-      --pos;
-    } else {
-      pos = controler.length - 1;
-    }
+  digitalWrite(controler.sem[pos], HIGH);
+  switch (controler.modes)
+  {
+    case NORMAL:
+      if (NonBlockingDelay(1000)){
+        if (pos < controler.length - 1) {
+          ++pos;
+        } else {
+          pos = 0;
+        }
+      }
+      break;
+    // default:
+    //   FsmButtonError2();
+    //   break;
   }
 }
