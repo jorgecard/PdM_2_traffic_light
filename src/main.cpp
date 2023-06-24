@@ -14,7 +14,7 @@ int16_t buttons[] = {SW1, SW2, SW3, SW4};
 int16_t len_button = sizeof(buttons)/sizeof(int16_t);
 int16_t sem[] ={LED_GREEN, LED_YELLOW, LED_RED};
 int16_t len_sem = sizeof(sem)/sizeof(int16_t);
-int16_t tim[] ={1000, 500, 200};
+int16_t tim[] ={3000, 500, 2000};
 double f_time = 1.0;
 typedef enum{
   BUTTON_UP,
@@ -41,17 +41,17 @@ typedef struct{
 int16_t NonBlockingDelay(int16_t t_delay);
 int16_t NonBlockingDelay2(int16_t t_delay);
 void FsmButtonInit(void);
-void FsmButtonUpdate(int16_t buttons[], sequenceControl controler);
+void FsmButtonUpdate(int16_t buttons[], sequenceControl& controler);
 void ButtonPressed (void);
-void ButtonReleased (sequenceControl controler);
+void ButtonReleased (sequenceControl& controler);
 void FsmButtonError (void);
 void FsmButtonError2 (void);
 void ButtonPressed_2 (void);
-void ButtonReleased_2 (sequenceControl controler);
-void TurnOffLeds(sequenceControl controler);
-void Sequence(sequenceControl controler);
-void SelectTime(sequenceControl controler);
-void SelectMode(sequenceControl controler);
+void ButtonReleased_2 (sequenceControl& controler);
+void TurnOffLeds(sequenceControl& controler);
+void Sequence(sequenceControl& controler);
+void SelectTime(sequenceControl& controler);
+void SelectMode(sequenceControl& controler);
 void setup() {
   for (int16_t i=0; i<len_leds;i++) pinMode(leds[i],OUTPUT);
   for (int16_t i=0; i<len_button;i++) pinMode(buttons[i],INPUT);
@@ -73,7 +73,7 @@ void FsmButtonInit(void){
   fsmButtonState = BUTTON_UP;
   fsmButtonState2 = BUTTON_UP_2;
 }
-void FsmButtonUpdate(int16_t buttons[], sequenceControl controler){
+void FsmButtonUpdate(int16_t buttons[], sequenceControl& controler){
   switch (fsmButtonState)
   {
   case  BUTTON_UP:
@@ -151,7 +151,7 @@ void FsmButtonUpdate(int16_t buttons[], sequenceControl controler){
 void ButtonPressed (void){
   digitalWrite(LED_BLUE, HIGH);
 }
-void ButtonReleased (sequenceControl controler){
+void ButtonReleased (sequenceControl& controler){
   digitalWrite(LED_BLUE, LOW);
   SelectMode(controler);
 }
@@ -161,7 +161,7 @@ void FsmButtonError (void){
 void ButtonPressed_2 (void){
   digitalWrite(LED_BLUE, HIGH);
 }
-void ButtonReleased_2 (sequenceControl controler){
+void ButtonReleased_2 (sequenceControl& controler){
   digitalWrite(LED_BLUE, LOW);
   SelectTime(controler);
 }
@@ -196,20 +196,21 @@ int16_t NonBlockingDelay2(int16_t t_delay){
     return 0;
   }
 }
-void TurnOffLeds(sequenceControl controler){
+void TurnOffLeds(sequenceControl& controler){
   for (int16_t i = 0; i < controler.length; i++){
     digitalWrite(controler.sem_light[i], LOW);
   }
 }
-void Sequence(sequenceControl controler) {
+void Sequence(sequenceControl& controler) {
   static int16_t pos = 0;                   // static: Entre llamadas a la función conserva su valor
   static boolean flag = true;
   TurnOffLeds(controler);
   if (flag){
     digitalWrite(controler.sem_light[pos], HIGH);
   }
-  Serial.println(f_time);
-  Serial.println(controler.times);
+  // Serial.println(f_time);
+  // Serial.println(controler.times);
+  // Serial.println(controler.modes);
   switch (controler.modes)
   {
     case NORMAL:
@@ -236,9 +237,22 @@ void Sequence(sequenceControl controler) {
       break;
   }
 }
-void SelectTime(sequenceControl controler){
-  Serial.println("FTime--------------------------------_______----------");
-  // static int16_t pos = 0;
+
+void SelectMode(sequenceControl& controler){
+  switch (controler.modes){
+    case NORMAL:
+      controler.modes = DISCONECTED;
+      break;
+    case DISCONECTED:
+      controler.modes = ALARM;
+      break;
+    case ALARM:
+      controler.modes = NORMAL;
+      break;
+  }
+}
+
+void SelectTime(sequenceControl& controler){
   switch (controler.times){
     case one:
       f_time = 2.0;
@@ -251,30 +265,6 @@ void SelectTime(sequenceControl controler){
     case half:
       f_time = 1.0;
       controler.times = one;
-      break;
-  }
-  
-  // if (f_time == 1){
-  //   f_time = 2;
-  // }
-  // if (f_time == 2){
-  //   f_time = 0.5;
-  // }
-  // if (f_time == 0.5){
-  //   f_time = 1;
-  // }
-}
-
-void SelectMode(sequenceControl controler){
-  switch (controler.modes){
-    case NORMAL:
-      controler.modes = DISCONECTED;
-      break;
-    case DISCONECTED:
-      controler.modes = ALARM;
-      break;
-    case ALARM:
-      controler.modes = NORMAL;
       break;
   }
 }
