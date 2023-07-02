@@ -1,6 +1,6 @@
 # PdM_2_traffic_light
 
-Semáforo Modularizado con 2 Botones
+Semáforo Modularizado con 2 Botones (Pull Down).
 
 Implementación mediante el modelo de Máquina de Estados Finitos (MEF) el antirrebote de  teclas y la lógica de funcionamiento de un semáforo.
 
